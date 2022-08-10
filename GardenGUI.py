@@ -436,11 +436,16 @@ def configureSoilMoisture():
 def animateAir(i, tempGraph, hmdGraph, xAir, temps, hmds):
     gardenOne.updateTemp()
     gardenOne.updateHumidity()
+    gardenOne.updateClimateControl()
+    gardenOne.updateFan()
     currentTemp = gardenOne.getTemp()
     currentHmd = gardenOne.getHmd()
-    
+
     currentTempLabel.configure(text = 'Current Temp: ' + str(currentTemp))
     currentHumLabel.configure(text = 'Current Hmd: ' + str(currentHmd))
+    
+    climateControlStateLabel.configure(text = 'Climate Control \nState: ' + gardenOne.getClimateControlState())
+    fanStateLabel.configure(text = 'Fan State: ' + gardenOne.getFanState())
     
     timestamp = mdates.date2num(dt.datetime.now())
     xAir.append(timestamp)
@@ -569,6 +574,10 @@ lowestSoilMoistureLabel = tk.Label(soilMoistureFrame, text = 'Lowest Soil \n Moi
 optimalMoistureLabel = tk.Label(soilMoistureFrame, text = 'Optimal Soil \nMoisture Level: ' + str(optimalMoisture), justify = "left")
 btnConfigureOptiSoilMoisture = tk.Button(soilMoistureFrame, text = 'Configure', command = configureSoilMoisture)
 
+fansFrame = tk.LabelFrame(root, text = 'Climate System', labelanchor = 'n', relief='sunken', width = 150, height = 215)
+climateControlStateLabel = tk.Label(fansFrame,  text = 'Climate Control \nState: ', justify = "left", font = ('aerial', 10))
+fanStateLabel = tk.Label(fansFrame, text = 'Fan State: ', justify = "left", font = ('aerial', 10))
+
 img = ImageTk.PhotoImage(Image.open("icons/icon.jpeg"))
 icon1 = tk.Label(root, image = img)
 
@@ -622,6 +631,10 @@ optimalMoistureLabel.place(x=10, y=115)
 lowestSoilMoistureLabel.place(x=10, y=45)
 greatestSoilMoistureLabel.place(x=10, y=80)
 btnConfigureOptiSoilMoisture.place(x=30, y=155)
+
+fansFrame.place(x=175, y=265)
+climateControlStateLabel.place(x=10, y=10)
+fanStateLabel.place(x=10, y=75)
 
 airGraphFrame.place(x=500, y=50)
 airCanvasPlot.place(x=0, y=0)

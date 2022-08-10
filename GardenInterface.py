@@ -21,14 +21,18 @@ class Garden:
         global fanState
         global clientSocket
         global moistureList
+        global climateControlState
+        global fanState
         optimalMoisture = 45
         temperature = 20
         humidity = 50
         averageSoilMoisture = 47
         greatestSoilMoisture = 51
         lowestSoilMoisture = 45
-        fanState = False
         moistureList = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        climateControlState = 'off'
+        fanState = 'off'
+        
 
     
     
@@ -99,8 +103,38 @@ class Garden:
         except:
             print("Error contacting Garden")
             print("or something, i don't really know")
+            
+    def updateClimateControl(self):
+        global climateControlState
+        global clientSocket
+        print("hello")
+        try:
+            clientSocket = socket.socket()
+            clientSocket.connect(('127.0.0.1', 8080))
+            clientSocket.send(('get.climate').encode())
+            response = clientSocket.recv(1024).decode()
+            print(response)
+            climateControlState = (response.split("."))[1]
+            clientSocket.close()
     
-        
+        except:
+            print("Error contacting Garden")
+            print("or something, i don't really know")
+    
+    
+    def updateFan(self):
+        global fanState
+        global clientSocket
+        try:
+            clientSocket = socket.socket()
+            clientSocket.connect(('127.0.0.1', 8080))
+            clientSocket.send(('get.fan').encode())
+            response = clientSocket.recv(1024).decode()
+            fanState = (response.split("."))[1]
+            clientSocket.close()
+        except:
+            print("Error contacting Garden")
+            print("or something, i don't really know")
     
     def getTemp(self):
         return(temperature)
@@ -116,6 +150,12 @@ class Garden:
     
     def getLowestMoisture(self):
         return(lowestSoilMoisture)
+    
+    def getClimateControlState(self):
+        return(climateControlState)
+    
+    def getFanState(self):
+        return(fanState)
     
     def modLights(self, rgb):
         print(rgb)

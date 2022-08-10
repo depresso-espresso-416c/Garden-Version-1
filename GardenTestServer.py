@@ -25,6 +25,9 @@ averageMoisture = 45
 moistureValues = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 optimalMoisture = 45
 
+climateControlState = 'off'
+fanState = False
+
 def soilMoistureString():
     global moistureValues
     returnString = ".["
@@ -55,23 +58,32 @@ def updateSoilMoisture():
     
 def updateTemp():
     global temperature
-    toAdd = random.randrange(-1, 1)
-    temperature = temperature + toAdd
+    global climateControlState
 
     if temperature > maxTemperature:
+        climateControlState = 'cool'
         temperature = temperature - 3
+        print("Cooling on")
     elif temperature < minTemperature:
+        climateControlState = 'heat'
         temperature = temperature + 3
+        print("heat on")
+    else:
+        climateControlState = 'off'
+        temperature = temperature + random.randrange(-1, 1)
 
 def updateHmd():
     global humidity
-    toAdd = random.randrange(-1, 1)
-    humidity = humidity + toAdd
-        
+       
     if humidity > maxHumidity:
         humidity = humidiy - 3
+        fanState = True
     elif humidity < minHumidity:
         humidity = humidity + 3
+        fanState = True
+    else:
+        humidity = humidity + random.randrange(-1, 1)
+        fanState = False
         
 
 s.bind(('', port))
@@ -81,19 +93,17 @@ print ("socket binded to %s" %(port))
 updateSoilMoisture()
 
 # put the socket into listening mode
-s.listen(1)
+s.listen(5)
 print ("socket is listening")
 
 
 
 while True:
     c, addr = s.accept()
-
-# send a thank you message to the client. encoding to send byte type.
-    
+    print(addr)
     try:
         message = c.recv(1024).decode()
-        #print (message)
+        print (message)
         messageArr = message.split(".")
         
         
@@ -129,6 +139,18 @@ while True:
                     c.send(('request.' + str(minHumidity)).encode())
             elif messageArr[1] == 'soil':
                 c.send(('request.' + str(optimalMoisture)).encode())
+            elif messageArr[1] == 'climate':
+                print(climateControlState)
+                c.send(('request.' + climateControlState).encode())
+            elif messageArr[1] == 'fan':
+                if fanState == True:
+                    c.send(('request.on').encode())
+                else:
+                    c.send(('request.off').encode())
+            else:
+                c.send(('error.error').encode())
+                print('unknown command' + messageArr)
+            
             
         else:
             if messageArr[0] == 'mod':
@@ -150,7 +172,9 @@ while True:
                 elif messageArr[1] == 'soil':
                     optimalMoisture = int(messageArr[2])
                 else:
-                    print("Unknown mod command " + message + "---" + str(messageArr)) 
+                    print("Unknown mod command " + message + "---" + str(messageArr))
+            else:
+                print('unknown command')
                 
             
             
