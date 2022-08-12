@@ -9,6 +9,8 @@ import socket
 from datetime import datetime
 from datetime import timedelta
 import datetime as dt
+import json
+
 import matplotlib.figure as figure
 import matplotlib.animation as animation
 import matplotlib.dates as mdates
@@ -21,6 +23,8 @@ lastColor = '#ff09ac'
 gardenOne = GardenInterface.Garden()
 gardenOne.updateSoilMoisture()
 
+graphDataPath = "Data/GraphData/graphData.json"
+
 xAir = []
 xSoil = []
 temps = []
@@ -28,15 +32,31 @@ hmds = []
 avgMoistures = []
 greatestMoistures = []
 lowestMoistures = []
+graphData = []
+
+try:
+    graphDataFile = open(graphDataPath)
+    data = json.load(graphDataFile)
+    xAir = data[0]
+    temps = data[1]
+    hmds = data[2]
+    xSoil = data[3]
+    avgMoistures = data[4]
+    greatestMoistures = data[5]
+    lowestMoistures = data[6]
+    
+except FileNotFoundError:
+    graphDataFile = open(graphDataPath, 'x')
+except:
+    pass
 
 update_interval = 15000
 max_elements = 60
 
 tempConfigOpen = False
-minTempValue = gardenOne.getMinTemp()
-
 currentTemp = 20
 maxTempValue = gardenOne.getMaxTemp()
+minTempValue = gardenOne.getMinTemp()
 temporaryMinTemp = minTempValue
 temporaryMaxTemp = maxTempValue
 
@@ -434,13 +454,20 @@ def configureSoilMoisture():
 
 
 def animateAir(i, tempGraph, hmdGraph, xAir, temps, hmds):
+    global graphData
+    
     gardenOne.updateTemp()
     gardenOne.updateHumidity()
+    #gardenOne.updateClimateControl()
+    #gardenOne.updateFan()
     currentTemp = gardenOne.getTemp()
     currentHmd = gardenOne.getHmd()
-    
+
     currentTempLabel.configure(text = 'Current Temp: ' + str(currentTemp))
     currentHumLabel.configure(text = 'Current Hmd: ' + str(currentHmd))
+    
+    #climateControlStateLabel.configure(text = 'Climate Control \nState: ' + gardenOne.getClimateControlState())
+    #fanStateLabel.configure(text = 'Fan State: ' + gardenOne.getFanState())
     
     timestamp = mdates.date2num(dt.datetime.now())
     xAir.append(timestamp)
@@ -451,6 +478,9 @@ def animateAir(i, tempGraph, hmdGraph, xAir, temps, hmds):
     xAir = xAir[-max_elements:]
     temps = temps[-max_elements:]
     hmds = hmds[-max_elements:]
+    
+    graphData = [xAir, temps, hmds]
+    
     
     color = 'tab:red'
     tempGraph.clear()
@@ -474,6 +504,8 @@ def animateAir(i, tempGraph, hmdGraph, xAir, temps, hmds):
     
 
 def animateSoil(i, avgGraph, greatestGraph, lowestGraph, xSoil, avgMoistures, greatestMoistures, lowestMoistures):
+    global graphData
+    
     gardenOne.updateSoilMoisture()
     averageSoilMoisture = gardenOne.getAverageMoisture()
     greatestSoilMoisture = gardenOne.getGreatestMoisture()
@@ -499,6 +531,15 @@ def animateSoil(i, avgGraph, greatestGraph, lowestGraph, xSoil, avgMoistures, gr
     greatestMoistures = greatestMoistures[-max_elements:]
     lowestMoistures = lowestMoistures[-max_elements:]
     
+    graphData.append(xSoil)
+    graphData.append(avgMoistures)
+    graphData.append(greatestMoistures)
+    graphData.append(lowestMoistures)
+    
+    
+    graphDataFile = open(graphDataPath, "w")
+    json.dump(graphData, graphDataFile)
+    
     color = 'tab:red'
     avgGraph.clear()
     avgGraph.set(ylim=(graphYMin, graphYMax))
@@ -511,7 +552,7 @@ def animateSoil(i, avgGraph, greatestGraph, lowestGraph, xSoil, avgMoistures, gr
     greatestGraph.set(ylim=(graphYMin, graphYMax))
     greatestGraph.set_ylabel('Greatest Moisture (%)', color=color)
     greatestGraph.tick_params(axis='y', labelcolor=color)
-    greatestGraph.plot(xSoil, greatestMoistures, linewidth=2, color=color, solid_capstyle='round')
+    greatestGraph.plot(xSoil, greatestMoistures, linewidth=2, color=color)
     
     color = 'tab:green'
     lowestGraph.clear()
@@ -569,7 +610,11 @@ lowestSoilMoistureLabel = tk.Label(soilMoistureFrame, text = 'Lowest Soil \n Moi
 optimalMoistureLabel = tk.Label(soilMoistureFrame, text = 'Optimal Soil \nMoisture Level: ' + str(optimalMoisture), justify = "left")
 btnConfigureOptiSoilMoisture = tk.Button(soilMoistureFrame, text = 'Configure', command = configureSoilMoisture)
 
-img = ImageTk.PhotoImage(Image.open("icons/icon.jpeg"))
+#fansFrame = tk.LabelFrame(root, text = 'Climate System', labelanchor = 'n', relief='sunken', width = 150, height = 215)
+#climateControlStateLabel = tk.Label(fansFrame,  text = 'Climate Control \nState: ', justify = "left", font = ('aerial', 10))
+#fanStateLabel = tk.Label(fansFrame, text = 'Fan State: ', justify = "left", font = ('aerial', 10))
+
+img = ImageTk.PhotoImage(Image.open("Data/icons/icon.jpeg"))
 icon1 = tk.Label(root, image = img)
 
 airGraphFrame = tk.Frame(root, width = 550, height = 320)
@@ -622,6 +667,10 @@ optimalMoistureLabel.place(x=10, y=115)
 lowestSoilMoistureLabel.place(x=10, y=45)
 greatestSoilMoistureLabel.place(x=10, y=80)
 btnConfigureOptiSoilMoisture.place(x=30, y=155)
+
+#fansFrame.place(x=175, y=265)
+#climateControlStateLabel.place(x=10, y=10)
+#fanStateLabel.place(x=10, y=75)
 
 airGraphFrame.place(x=500, y=50)
 airCanvasPlot.place(x=0, y=0)
