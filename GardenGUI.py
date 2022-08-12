@@ -9,6 +9,8 @@ import socket
 from datetime import datetime
 from datetime import timedelta
 import datetime as dt
+import json
+
 import matplotlib.figure as figure
 import matplotlib.animation as animation
 import matplotlib.dates as mdates
@@ -28,6 +30,24 @@ hmds = []
 avgMoistures = []
 greatestMoistures = []
 lowestMoistures = []
+graphData = []
+
+try:
+    graphDataFile = open("graphData.json")
+    data = json.load(graphDataFile)
+    print(data[1])
+    xAir = data[0]
+    temps = data[1]
+    hmds = data[2]
+    xSoil = data[3]
+    avgMoistures = data[4]
+    greatestMoistures = data[5]
+    lowestMoistures = data[6]
+    
+except FileNotFoundError:
+    graphDataFile = open("graphData.json", 'x')
+except:
+    pass
 
 update_interval = 15000
 max_elements = 60
@@ -434,6 +454,8 @@ def configureSoilMoisture():
 
 
 def animateAir(i, tempGraph, hmdGraph, xAir, temps, hmds):
+    global graphData
+    
     gardenOne.updateTemp()
     gardenOne.updateHumidity()
     gardenOne.updateClimateControl()
@@ -457,6 +479,9 @@ def animateAir(i, tempGraph, hmdGraph, xAir, temps, hmds):
     temps = temps[-max_elements:]
     hmds = hmds[-max_elements:]
     
+    graphData = [xAir, temps, hmds]
+    
+    
     color = 'tab:red'
     tempGraph.clear()
     tempGraph.set(ylim=(0, 100))
@@ -479,6 +504,7 @@ def animateAir(i, tempGraph, hmdGraph, xAir, temps, hmds):
     
 
 def animateSoil(i, avgGraph, greatestGraph, lowestGraph, xSoil, avgMoistures, greatestMoistures, lowestMoistures):
+    global graphData
     gardenOne.updateSoilMoisture()
     averageSoilMoisture = gardenOne.getAverageMoisture()
     greatestSoilMoisture = gardenOne.getGreatestMoisture()
@@ -503,6 +529,14 @@ def animateSoil(i, avgGraph, greatestGraph, lowestGraph, xSoil, avgMoistures, gr
     avgMoistures = avgMoistures[-max_elements:]
     greatestMoistures = greatestMoistures[-max_elements:]
     lowestMoistures = lowestMoistures[-max_elements:]
+    
+    graphData.append(xSoil)
+    graphData.append(avgMoistures)
+    graphData.append(greatestMoistures)
+    graphData.append(lowestMoistures)
+    
+    graphDataFile = open("graphData.json", "w")
+    json.dump(graphData, graphDataFile)
     
     color = 'tab:red'
     avgGraph.clear()
