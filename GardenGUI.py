@@ -23,6 +23,8 @@ lastColor = '#ff09ac'
 gardenOne = GardenInterface.Garden()
 gardenOne.updateSoilMoisture()
 
+graphDataPath = "Data/GraphData/graphData.json"
+
 xAir = []
 xSoil = []
 temps = []
@@ -33,9 +35,8 @@ lowestMoistures = []
 graphData = []
 
 try:
-    graphDataFile = open("graphData.json")
+    graphDataFile = open(graphDataPath)
     data = json.load(graphDataFile)
-    print(data[1])
     xAir = data[0]
     temps = data[1]
     hmds = data[2]
@@ -45,7 +46,7 @@ try:
     lowestMoistures = data[6]
     
 except FileNotFoundError:
-    graphDataFile = open("graphData.json", 'x')
+    graphDataFile = open(graphDataPath, 'x')
 except:
     pass
 
@@ -53,10 +54,9 @@ update_interval = 15000
 max_elements = 60
 
 tempConfigOpen = False
-minTempValue = gardenOne.getMinTemp()
-
 currentTemp = 20
 maxTempValue = gardenOne.getMaxTemp()
+minTempValue = gardenOne.getMinTemp()
 temporaryMinTemp = minTempValue
 temporaryMaxTemp = maxTempValue
 
@@ -535,7 +535,7 @@ def animateSoil(i, avgGraph, greatestGraph, lowestGraph, xSoil, avgMoistures, gr
     graphData.append(greatestMoistures)
     graphData.append(lowestMoistures)
     
-    graphDataFile = open("graphData.json", "w")
+    graphDataFile = open(graphDataPath, "w")
     json.dump(graphData, graphDataFile)
     
     color = 'tab:red'
@@ -550,7 +550,7 @@ def animateSoil(i, avgGraph, greatestGraph, lowestGraph, xSoil, avgMoistures, gr
     greatestGraph.set(ylim=(graphYMin, graphYMax))
     greatestGraph.set_ylabel('Greatest Moisture (%)', color=color)
     greatestGraph.tick_params(axis='y', labelcolor=color)
-    greatestGraph.plot(xSoil, greatestMoistures, linewidth=2, color=color, solid_capstyle='round')
+    greatestGraph.plot(xSoil, greatestMoistures, linewidth=2, color=color)
     
     color = 'tab:green'
     lowestGraph.clear()
@@ -612,7 +612,7 @@ fansFrame = tk.LabelFrame(root, text = 'Climate System', labelanchor = 'n', reli
 climateControlStateLabel = tk.Label(fansFrame,  text = 'Climate Control \nState: ', justify = "left", font = ('aerial', 10))
 fanStateLabel = tk.Label(fansFrame, text = 'Fan State: ', justify = "left", font = ('aerial', 10))
 
-img = ImageTk.PhotoImage(Image.open("icons/icon.jpeg"))
+img = ImageTk.PhotoImage(Image.open("Data/icons/icon.jpeg"))
 icon1 = tk.Label(root, image = img)
 
 airGraphFrame = tk.Frame(root, width = 550, height = 320)
